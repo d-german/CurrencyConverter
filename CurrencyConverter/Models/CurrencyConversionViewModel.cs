@@ -1,6 +1,6 @@
 ﻿namespace CurrencyConverter.Models;
 
-public class CurrencyConversion
+public class CurrencyConversionViewModel
 {
     public string SourceCurrency { get; set; }
     public string TargetCurrency { get; set; }

@@ -1,62 +1,62 @@
 ﻿using CurrencyConverter.Configurations;
-using Newtonsoft.Json.Linq;
+using CurrencyConverter.Dto;
 using Microsoft.AspNetCore.Mvc;
 using CurrencyConverter.Models;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
-namespace CurrencyConverter.Controllers
+namespace CurrencyConverter.Controllers;
+
+public class HomeController : Controller
 {
-    public class HomeController : Controller
+    private readonly ApiConfig _apiConfig;
+
+    public HomeController(IOptions<ApiConfig> apiConfig)
     {
-        private readonly ApiConfig _apiConfig;
+        _apiConfig = apiConfig.Value;
+    }
 
-        public HomeController(IOptions<ApiConfig> apiConfig)
+    public IActionResult Index()
+    {
+        return View(new CurrencyConversionViewModel
         {
-            _apiConfig = apiConfig.Value;
-        }
+            TargetCurrency = "USD",
+            SourceCurrency = "EUR",
+            InputAmount = 100
+        });
+    }
 
-        public IActionResult Index()
-        {
-            return View(new CurrencyConversion
-            {
-                TargetCurrency = "USD",
-                SourceCurrency = "EUR",
-                InputAmount = 100
-            });
-        }
+    [HttpPost]
+    public IActionResult ConvertCurrency(CurrencyConversionViewModel model)
+    {
+        if (!ModelState.IsValid) return View("Index", model);
 
-        [HttpPost]
-        public IActionResult ConvertCurrency(CurrencyConversion model)
-        {
-            if (!ModelState.IsValid) return View("Index", model);
+        var apiKey = _apiConfig.ApiKey;
+        var rate = GetExchangeRateAsync(model, apiKey);
+        model.ConvertedAmount = rate;
 
-            var apiKey = _apiConfig.ApiKey;
-            var rate = GetExchangeRateAsync(model, apiKey);
-            model.ConvertedAmount = rate;
+        return View("Index", model);
+    }
 
-            return View("Index", model);
-        }
+    private static double GetExchangeRateAsync(CurrencyConversionViewModel model, string apiKey)
+    {
+        //https://exchangeratesapi.io/
+        var apiUrl = $"https://api.apilayer.com/exchangerates_data/convert?to={model.TargetCurrency}&from={model.SourceCurrency}&amount={model.InputAmount}";
 
-        private static double GetExchangeRateAsync(CurrencyConversion model, string apiKey)
-        {
-            //https://exchangeratesapi.io/
-            var apiUrl = $"https://api.apilayer.com/exchangerates_data/convert?to={model.TargetCurrency}&from={model.SourceCurrency}&amount={model.InputAmount}";
+        var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
 
-            var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
+        request.Headers.Add("apikey", apiKey);
 
-            request.Headers.Add("apikey", apiKey);
+        var response = new HttpClient().Send(request);
 
-            var response = new HttpClient().Send(request);
+        if (!response.IsSuccessStatusCode) throw new Exception($"Error fetching exchange rate: {response.ReasonPhrase}");
+        var exchangeRateResponse = JsonConvert.DeserializeObject<ExchangeRateResponse>(response.Content.ReadAsStringAsync().Result); //note .result
+        
+        return exchangeRateResponse!.Result;
+    }
 
-            if (!response.IsSuccessStatusCode) throw new Exception($"Error fetching exchange rate: {response.ReasonPhrase}");
-            var responseContent =  response.Content.ReadAsStringAsync().Result;
-            var json = JObject.Parse(responseContent);
-            return (double)json["result"]!;
-        }
-
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+    public IActionResult Privacy()
+    {
+        return View();
     }
 }
