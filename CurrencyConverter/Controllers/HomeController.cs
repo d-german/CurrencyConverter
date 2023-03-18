@@ -26,18 +26,18 @@ namespace CurrencyConverter.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ConvertCurrency(CurrencyConversion model)
+        public IActionResult ConvertCurrency(CurrencyConversion model)
         {
             if (!ModelState.IsValid) return View("Index", model);
 
             var apiKey = _apiConfig.ApiKey;
-            var rate = await GetExchangeRateAsync(model, apiKey);
+            var rate = GetExchangeRateAsync(model, apiKey);
             model.ConvertedAmount = rate;
 
             return View("Index", model);
         }
 
-        private static async Task<double> GetExchangeRateAsync(CurrencyConversion model, string apiKey)
+        private static double GetExchangeRateAsync(CurrencyConversion model, string apiKey)
         {
             //https://exchangeratesapi.io/
             var apiUrl = $"https://api.apilayer.com/exchangerates_data/convert?to={model.TargetCurrency}&from={model.SourceCurrency}&amount={model.InputAmount}";
@@ -46,10 +46,10 @@ namespace CurrencyConverter.Controllers
 
             request.Headers.Add("apikey", apiKey);
 
-            var response = await new HttpClient().SendAsync(request);
+            var response = new HttpClient().Send(request);
 
             if (!response.IsSuccessStatusCode) throw new Exception($"Error fetching exchange rate: {response.ReasonPhrase}");
-            var responseContent = await response.Content.ReadAsStringAsync();
+            var responseContent =  response.Content.ReadAsStringAsync().Result;
             var json = JObject.Parse(responseContent);
             return (double)json["result"]!;
         }
