@@ -1,4 +1,5 @@
-﻿using CurrencyConverter.Configurations;
+﻿using System.Collections;
+using CurrencyConverter.Configurations;
 using CurrencyConverter.Dto;
 using Microsoft.AspNetCore.Mvc;
 using CurrencyConverter.Models;
@@ -18,6 +19,7 @@ public class HomeController : Controller
 
     public IActionResult Index()
     {
+        var symbols = GetCurrencySymbolsAsync(_apiConfig.ApiKey);
         return View(new CurrencyConversionViewModel
         {
             TargetCurrency = "USD",
@@ -51,8 +53,35 @@ public class HomeController : Controller
 
         if (!response.IsSuccessStatusCode) throw new Exception($"Error fetching exchange rate: {response.ReasonPhrase}");
         var exchangeRateResponse = JsonConvert.DeserializeObject<ExchangeRateResponse>(response.Content.ReadAsStringAsync().Result); //note .result
-        
+
         return exchangeRateResponse!.Result;
+    }
+
+    private static string[] GetCurrencySymbolsAsync(string apiKey)
+    {
+        const string apiUrl = "https://api.apilayer.com/exchangerates_data/symbols";
+
+        var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
+        request.Headers.Add("apikey", apiKey);
+
+        var response = new HttpClient().Send(request);
+
+        if (!response.IsSuccessStatusCode) throw new Exception($"Error fetching exchange rate: {response.ReasonPhrase}");
+        var exchangeRateResponse = JsonConvert.DeserializeObject<CurrencySymbolsResponse>(response.Content.ReadAsStringAsync().Result); //note .result
+
+        var keyArray = new string[exchangeRateResponse.Symbols.Keys.Count];
+        var i = 0;
+        foreach (var key in exchangeRateResponse.Symbols.Keys)
+        {
+            keyArray[i++] = (string)key;
+        }
+
+        return keyArray;
+    }
+
+    public IActionResult Error()
+    {
+        return View();
     }
 
     public IActionResult Privacy()
