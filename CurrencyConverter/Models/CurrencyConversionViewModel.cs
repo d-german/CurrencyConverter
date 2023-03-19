@@ -6,4 +6,5 @@ public class CurrencyConversionViewModel
     public string TargetCurrency { get; set; }
     public double InputAmount { get; set; }
     public double? ConvertedAmount { get; set; }
+    public string[] CurrencySymbols { get; set; }
 }

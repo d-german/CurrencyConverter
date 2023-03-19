@@ -16,11 +16,11 @@
             <h1 class="text-center mb-4">Currency Converter</h1>
             <form asp-controller="Home" asp-action="ConvertCurrency" method="post">
                 <div class="input-group mb-3">
-                    <input asp-for="SourceCurrency" class="form-control" placeholder="Source Currency" />
+                    <select asp-for="SourceCurrency" asp-items="@(new SelectList(Model.CurrencySymbols))" class="form-select"></select>
                     <input asp-for="InputAmount" class="form-control" placeholder="Amount" />
                 </div>
                 <div class="input-group mb-3">
-                    <input asp-for="TargetCurrency" class="form-control" placeholder="Target Currency" />
+                    <select asp-for="TargetCurrency" asp-items="@(new SelectList(Model.CurrencySymbols))" class="form-select"></select>
                     <input asp-for="ConvertedAmount" class="form-control" placeholder="Converted Amount" value="@(Model.ConvertedAmount.HasValue ? Model.ConvertedAmount.Value.ToString() : string.Empty)" readonly />
                 </div>
                 <div class="d-grid">

@@ -19,23 +19,22 @@ public class HomeController : Controller
 
     public IActionResult Index()
     {
-        var symbols = GetCurrencySymbolsAsync(_apiConfig.ApiKey);
         return View(new CurrencyConversionViewModel
         {
             TargetCurrency = "USD",
             SourceCurrency = "EUR",
-            InputAmount = 100
+            InputAmount = 100,
+            CurrencySymbols = GetCurrencySymbolsAsync(_apiConfig.ApiKey)
         });
     }
 
     [HttpPost]
     public IActionResult ConvertCurrency(CurrencyConversionViewModel model)
     {
-        if (!ModelState.IsValid) return View("Index", model);
-
         var apiKey = _apiConfig.ApiKey;
         var rate = GetExchangeRateAsync(model, apiKey);
         model.ConvertedAmount = rate;
+        model.CurrencySymbols = GetCurrencySymbolsAsync(_apiConfig.ApiKey);
 
         return View("Index", model);
     }
@@ -52,13 +51,14 @@ public class HomeController : Controller
         var response = new HttpClient().Send(request);
 
         if (!response.IsSuccessStatusCode) throw new Exception($"Error fetching exchange rate: {response.ReasonPhrase}");
-        var exchangeRateResponse = JsonConvert.DeserializeObject<ExchangeRateResponse>(response.Content.ReadAsStringAsync().Result); //note .result
+        var exchangeRateResponse = JsonConvert.DeserializeObject<ExchangeRateResponse>(response.Content.ReadAsStringAsync().Result); //TODO: make this async
 
         return exchangeRateResponse!.Result;
     }
 
     private static string[] GetCurrencySymbolsAsync(string apiKey)
     {
+        //https://exchangeratesapi.io/
         const string apiUrl = "https://api.apilayer.com/exchangerates_data/symbols";
 
         var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
@@ -67,7 +67,7 @@ public class HomeController : Controller
         var response = new HttpClient().Send(request);
 
         if (!response.IsSuccessStatusCode) throw new Exception($"Error fetching exchange rate: {response.ReasonPhrase}");
-        var exchangeRateResponse = JsonConvert.DeserializeObject<CurrencySymbolsResponse>(response.Content.ReadAsStringAsync().Result); //note .result
+        var exchangeRateResponse = JsonConvert.DeserializeObject<CurrencySymbolsResponse>(response.Content.ReadAsStringAsync().Result); //TODO: make this async
 
         var keyArray = new string[exchangeRateResponse.Symbols.Keys.Count];
         var i = 0;
