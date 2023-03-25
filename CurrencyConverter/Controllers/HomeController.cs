@@ -1,9 +1,10 @@
-﻿using CurrencyConverter.Configurations;
+﻿using System.Text.Json;
+using CurrencyConverter.Configurations;
 using CurrencyConverter.Dto;
 using Microsoft.AspNetCore.Mvc;
 using CurrencyConverter.Models;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
+
 
 namespace CurrencyConverter.Controllers;
 
@@ -13,6 +14,11 @@ public class HomeController : Controller
     private const string DefaultSourceCurrency = "EUR";
     private const int InitialInputAmount = 100;
     private readonly ApiConfig _apiConfig;
+
+    private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
 
     public HomeController(IOptions<ApiConfig> apiConfig)
     {
@@ -53,7 +59,7 @@ public class HomeController : Controller
         var response = new HttpClient().Send(request);
 
         if (!response.IsSuccessStatusCode) throw new Exception($"Error fetching exchange rate: {response.ReasonPhrase}");
-        var exchangeRateResponse = JsonConvert.DeserializeObject<ExchangeRateResponse>(response.Content.ReadAsStringAsync().Result); // TODO: make this async
+        var exchangeRateResponse = JsonSerializer.Deserialize<ExchangeRateResponse>(response.Content.ReadAsStringAsync().Result, JsonOptions); // TODO: make this async
 
         return exchangeRateResponse!.Result;
     }
@@ -69,7 +75,8 @@ public class HomeController : Controller
         var response = new HttpClient().Send(request);
 
         if (!response.IsSuccessStatusCode) throw new Exception($"Error fetching exchange rate: {response.ReasonPhrase}");
-        var exchangeRateResponse = JsonConvert.DeserializeObject<CurrencySymbolsResponse>(response.Content.ReadAsStringAsync().Result); // TODO: make this async
+
+        var exchangeRateResponse = JsonSerializer.Deserialize<CurrencySymbolsResponse>(response.Content.ReadAsStringAsync().Result, JsonOptions); // TODO: make this async
 
         // TODO: use linq
         var keyArray = new string[exchangeRateResponse.Symbols.Keys.Count];
