@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using CurrencyConverter.Configurations;
+﻿using CurrencyConverter.Configurations;
 using CurrencyConverter.Dto;
 using Microsoft.AspNetCore.Mvc;
 using CurrencyConverter.Models;
@@ -10,6 +9,9 @@ namespace CurrencyConverter.Controllers;
 
 public class HomeController : Controller
 {
+    private const string DefaultTargetCurrency = "USD";
+    private const string DefaultSourceCurrency = "EUR";
+    private const int InitialInputAmount = 100;
     private readonly ApiConfig _apiConfig;
 
     public HomeController(IOptions<ApiConfig> apiConfig)
@@ -21,10 +23,10 @@ public class HomeController : Controller
     {
         return View(new CurrencyConversionViewModel
         {
-            TargetCurrency = "USD",
-            SourceCurrency = "EUR",
-            InputAmount = 100,
-            CurrencySymbols = GetCurrencySymbolsAsync(_apiConfig.ApiKey)
+            TargetCurrency = DefaultTargetCurrency,
+            SourceCurrency = DefaultSourceCurrency,
+            InputAmount = InitialInputAmount,
+            CurrencySymbols = GetCurrencySymbols(_apiConfig.ApiKey)
         });
     }
 
@@ -32,14 +34,14 @@ public class HomeController : Controller
     public IActionResult ConvertCurrency(CurrencyConversionViewModel model)
     {
         var apiKey = _apiConfig.ApiKey;
-        var rate = GetExchangeRateAsync(model, apiKey);
+        var rate = GetExchangeRate(model, apiKey);
         model.ConvertedAmount = rate;
-        model.CurrencySymbols = GetCurrencySymbolsAsync(_apiConfig.ApiKey);
+        model.CurrencySymbols = GetCurrencySymbols(_apiConfig.ApiKey);
 
         return View("Index", model);
     }
 
-    private static double GetExchangeRateAsync(CurrencyConversionViewModel model, string apiKey)
+    private static double GetExchangeRate(CurrencyConversionViewModel model, string apiKey)
     {
         //https://exchangeratesapi.io/
         var apiUrl = $"https://api.apilayer.com/exchangerates_data/convert?to={model.TargetCurrency}&from={model.SourceCurrency}&amount={model.InputAmount}";
@@ -51,12 +53,12 @@ public class HomeController : Controller
         var response = new HttpClient().Send(request);
 
         if (!response.IsSuccessStatusCode) throw new Exception($"Error fetching exchange rate: {response.ReasonPhrase}");
-        var exchangeRateResponse = JsonConvert.DeserializeObject<ExchangeRateResponse>(response.Content.ReadAsStringAsync().Result); //TODO: make this async
+        var exchangeRateResponse = JsonConvert.DeserializeObject<ExchangeRateResponse>(response.Content.ReadAsStringAsync().Result); // TODO: make this async
 
         return exchangeRateResponse!.Result;
     }
 
-    private static string[] GetCurrencySymbolsAsync(string apiKey)
+    private static string[] GetCurrencySymbols(string apiKey)
     {
         //https://exchangeratesapi.io/
         const string apiUrl = "https://api.apilayer.com/exchangerates_data/symbols";
@@ -67,8 +69,9 @@ public class HomeController : Controller
         var response = new HttpClient().Send(request);
 
         if (!response.IsSuccessStatusCode) throw new Exception($"Error fetching exchange rate: {response.ReasonPhrase}");
-        var exchangeRateResponse = JsonConvert.DeserializeObject<CurrencySymbolsResponse>(response.Content.ReadAsStringAsync().Result); //TODO: make this async
+        var exchangeRateResponse = JsonConvert.DeserializeObject<CurrencySymbolsResponse>(response.Content.ReadAsStringAsync().Result); // TODO: make this async
 
+        // TODO: use linq
         var keyArray = new string[exchangeRateResponse.Symbols.Keys.Count];
         var i = 0;
         foreach (var key in exchangeRateResponse.Symbols.Keys)
