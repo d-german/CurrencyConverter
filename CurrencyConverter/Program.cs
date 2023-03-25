@@ -1,4 +1,5 @@
 using CurrencyConverter.Configurations;
+using CurrencyConverter.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 builder.Services.Configure<ApiConfig>(builder.Configuration);
+
+builder.Services.AddTransient<ICurrencySymbolService, CurrencySymbolService>();
 
 var app = builder.Build();
 
