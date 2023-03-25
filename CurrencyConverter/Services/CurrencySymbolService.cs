@@ -8,22 +8,22 @@ namespace CurrencyConverter.Services;
 public class CurrencySymbolService : ICurrencySymbolService
 {
     private readonly ApiConfig _apiConfig;
-    
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
-    
+
     public CurrencySymbolService(IOptions<ApiConfig> apiConfig)
     {
         _apiConfig = apiConfig.Value;
     }
-    
+
     public string[] GetCurrencySymbols()
     {
         return GetCurrencySymbolsInternal();
     }
-    
+
     private string[] GetCurrencySymbolsInternal()
     {
         //https://exchangeratesapi.io/
