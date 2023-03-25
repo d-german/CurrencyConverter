@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using CurrencyConverter.Models;
 using Microsoft.Extensions.Options;
 
-
 namespace CurrencyConverter.Controllers;
 
 public class HomeController : Controller
@@ -15,7 +14,7 @@ public class HomeController : Controller
     private const int InitialInputAmount = 100;
     private readonly ApiConfig _apiConfig;
 
-    private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
+    private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
