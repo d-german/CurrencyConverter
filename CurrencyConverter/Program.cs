@@ -8,8 +8,16 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.Configure<ApiConfig>(builder.Configuration);
 
-builder.Services.AddTransient<ICurrencySymbolService, CurrencySymbolService>();
-builder.Services.AddTransient<IExchangeRateService, ExchangeRateService>();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddTransient<ICurrencySymbolService, LocalCurrencySymbolService>();
+    builder.Services.AddTransient<IExchangeRateService, LocalExchangeRateService>();
+}
+else
+{
+    builder.Services.AddTransient<ICurrencySymbolService, CurrencySymbolService>();
+    builder.Services.AddTransient<IExchangeRateService, ExchangeRateService>();
+}
 
 var app = builder.Build();
 
