@@ -7,6 +7,12 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.Configure<ApiConfig>(builder.Configuration);
 
+// Configure Kestrel server
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    // Set properties and call methods on options
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
